@@ -1,14 +1,34 @@
 package com.vis.rest;
 
-import org.springframework.stereotype.Component;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-@Component
+import java.nio.file.Path;
+
+@Configuration
 public class IngredientDAOFactory {
 
-    private final PostgresIngredientDao postgresDao;
+    private final IngredientDao postgresDao;
+    private final IngredientDao csvDao;
 
-    public IngredientDAOFactory(PostgresIngredientDao postgresDao) {
-        this.postgresDao = postgresDao;
+    public IngredientDAOFactory(JdbcClient jdbcClient) {
+        this.postgresDao = new PostgresIngredientDao(
+                jdbcClient,
+                new PostgresIngredientMapper()
+        );
+        this.csvDao = new TextFileIngredientDao(
+                Path.of("ingredients.csv"),
+                new CsvIngredientMapper()
+        );
+    }
+
+    @Bean
+    public IngredientDao ingredientDao(
+            @Value("${storage.type}") String storageType
+    ) {
+        return create(storageType);
     }
 
     public IngredientDao create(String storageType) {
@@ -17,11 +37,11 @@ public class IngredientDAOFactory {
         }
 
         if ("csv".equalsIgnoreCase(storageType)) {
-            return new TextFileIngredientDao(); //ideálně sjednotit ať to je jedna možnost nebo druhá, protože jedna vytváří nový a kdo ví co
+            return csvDao;
         }
 
         throw new IllegalArgumentException(
-                "Spatne uloziste: " + storageType
+                "Špatné úložiště: " + storageType
         );
     }
 }

@@ -15,8 +15,8 @@ public class IngredientController {
     }
 
     @GetMapping
-    public List<Ingredient> findAll() {
-        return ingredientService.findAll();
+    public List<Ingredient> getAllItems() {
+        return ingredientService.getAllItems();
     }
 
     @PostMapping

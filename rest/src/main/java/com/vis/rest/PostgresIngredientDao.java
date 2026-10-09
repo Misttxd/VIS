@@ -1,27 +1,26 @@
 package com.vis.rest;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.stereotype.Repository;
-
 import java.util.List;
 
-@Repository
 public class PostgresIngredientDao implements IngredientDao {
 
     private final JdbcClient jdbcClient;
+    private final PostgresIngredientMapper mapper;
 
-    public PostgresIngredientDao(JdbcClient jdbcClient) {
+    public PostgresIngredientDao(JdbcClient jdbcClient, PostgresIngredientMapper mapper) {
         this.jdbcClient = jdbcClient;
+        this.mapper = mapper;
     }
 
     @Override
-    public List<Ingredient> findAll() {
+    public List<Ingredient> getAllItems() {
         return jdbcClient.sql("""
                 SELECT id, category_id, name, default_unit
                 FROM ingredient
                 ORDER BY name
                 """)
-                .query(Ingredient.class)
+                .query(mapper)
                 .list();
     }
 

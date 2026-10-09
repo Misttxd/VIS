@@ -3,7 +3,7 @@ package com.vis.rest;
 import java.util.List;
 
 public interface IngredientDao {
-    List<Ingredient> findAll();
+    List<Ingredient> getAllItems();
 
-    Long create (Ingredient ingredient);
+    Long create(Ingredient ingredient);
 }
