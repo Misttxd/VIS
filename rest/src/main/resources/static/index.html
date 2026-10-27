@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evidence surovin a receptů</title>
+    <style>
+        body {
+            max-width: 720px;
+            margin: 40px auto;
+            padding: 0 20px;
+            font-family: Arial, sans-serif;
+            color: #222;
+        }
+
+        form {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        label {
+            display: grid;
+            gap: 4px;
+        }
+
+        input, textarea, button {
+            padding: 10px;
+            font: inherit;
+        }
+
+        section {
+            margin-top: 40px;
+        }
+
+        .recipe-ingredient-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto auto;
+            gap: 8px;
+            align-items: end;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        #message {
+            min-height: 24px;
+        }
+
+        .error {
+            color: #b00020;
+        }
+    </style>
+</head>
+<body>
+<h1>Evidence surovin</h1>
+
+<form id="ingredient-form">
+    <label>
+        Název
+        <input id="name" name="name" required>
+    </label>
+
+    <label>
+        Výchozí jednotka
+        <input id="default-unit" name="defaultUnit" placeholder="g, ml, ks" required>
+    </label>
+
+    <label>
+        ID kategorie (volitelné)
+        <input id="category-id" name="categoryId" type="number" min="1">
+    </label>
+
+    <button type="submit">Přidat surovinu</button>
+</form>
+
+<p id="message" role="status"></p>
+
+<h2>Uložené suroviny</h2>
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Název</th>
+        <th>Jednotka</th>
+        <th>Kategorie</th>
+    </tr>
+    </thead>
+    <tbody id="ingredient-list"></tbody>
+</table>
+
+<section>
+    <h2>Přidat recept</h2>
+    <form id="recipe-form">
+        <label>Název <input id="recipe-name" required></label>
+        <label>Postup <textarea id="recipe-instructions" required></textarea></label>
+        <label>Čas přípravy v minutách <input id="preparation-time" type="number" min="1" required></label>
+        <label>Počet porcí <input id="servings" type="number" min="1" required></label>
+        <div id="recipe-ingredients"></div>
+        <button id="add-recipe-ingredient" type="button">Přidat další surovinu</button>
+        <button type="submit">Přidat recept</button>
+    </form>
+    <p id="recipe-message" role="status"></p>
+</section>
+
+<section>
+    <h2>Detail receptu</h2>
+    <form id="recipe-detail-form">
+        <label>ID receptu <input id="recipe-id" type="number" min="1" required></label>
+        <button type="submit">Načíst recept</button>
+    </form>
+    <p id="recipe-detail-info"></p>
+    <table>
+        <thead>
+        <tr>
+            <th>Surovina</th>
+            <th>Množství</th>
+            <th>Jednotka</th>
+            <th>Volitelná</th>
+        </tr>
+        </thead>
+        <tbody id="recipe-ingredient-list"></tbody>
+    </table>
+</section>
+
+<script>
+    const form = document.querySelector("#ingredient-form");
+    const list = document.querySelector("#ingredient-list");
+    const message = document.querySelector("#message");
+    let availableIngredients = [];
+
+    function addCell(row, value) {
+        const cell = document.createElement("td");
+        cell.textContent = value ?? "—";
+        row.appendChild(cell);
+    }
+
+    async function loadIngredients() {
+        const response = await fetch("/ingredients");
+
+        if (!response.ok) {
+            throw new Error("Suroviny se nepodařilo načíst.");
+        }
+
+        const ingredients = await response.json();
+        availableIngredients = ingredients;
+        list.replaceChildren();
+
+        for (const ingredient of ingredients) {
+            const row = document.createElement("tr");
+            addCell(row, ingredient.id);
+            addCell(row, ingredient.name);
+            addCell(row, ingredient.defaultUnit);
+            addCell(row, ingredient.categoryId);
+            list.appendChild(row);
+        }
+    }
+
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+        message.textContent = "Ukládám…";
+        message.className = "";
+
+        const categoryValue = document.querySelector("#category-id").value;
+        const ingredient = {
+            id: null,
+            categoryId: categoryValue ? Number(categoryValue) : null,
+            name: document.querySelector("#name").value.trim(),
+            defaultUnit: document.querySelector("#default-unit").value.trim()
+        };
+
+        try {
+            const response = await fetch("/ingredients", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(ingredient)
+            });
+
+            if (!response.ok) {
+                throw new Error("Surovinu se nepodařilo uložit.");
+            }
+
+            const id = await response.json();
+            message.textContent = `Surovina byla uložena s ID ${id}.`;
+            form.reset();
+            await loadIngredients();
+            refreshRecipeIngredientRows();
+        } catch (error) {
+            message.textContent = error.message;
+            message.className = "error";
+        }
+    });
+
+    const recipeForm = document.querySelector("#recipe-form");
+    const recipeMessage = document.querySelector("#recipe-message");
+    const recipeDetailForm = document.querySelector("#recipe-detail-form");
+    const recipeDetailInfo = document.querySelector("#recipe-detail-info");
+    const recipeIngredientList = document.querySelector("#recipe-ingredient-list");
+    const recipeIngredients = document.querySelector("#recipe-ingredients");
+
+    function addRecipeIngredientRow() {
+        const row = document.createElement("div");
+        row.className = "recipe-ingredient-row";
+        const options = availableIngredients
+            .map(ingredient => `<option value="${ingredient.id}" data-unit="${ingredient.defaultUnit}">${ingredient.name}</option>`)
+            .join("");
+
+        row.innerHTML = `
+            <label>Surovina<select class="recipe-ingredient-id" required>${options}</select></label>
+            <label>Množství<input class="recipe-quantity" type="number" min="0.001" step="0.001" required></label>
+            <label>Jednotka<input class="recipe-unit" required></label>
+            <label>Volitelná<input class="recipe-optional" type="checkbox"></label>
+            <button type="button" class="remove-ingredient">Odebrat</button>
+        `;
+
+        const select = row.querySelector(".recipe-ingredient-id");
+        const unit = row.querySelector(".recipe-unit");
+        const setDefaultUnit = () => {
+            unit.value = select.selectedOptions[0]?.dataset.unit ?? "";
+        };
+        select.addEventListener("change", setDefaultUnit);
+        row.querySelector(".remove-ingredient").addEventListener("click", () => row.remove());
+        setDefaultUnit();
+        recipeIngredients.appendChild(row);
+    }
+
+    function refreshRecipeIngredientRows() {
+        recipeIngredients.replaceChildren();
+        addRecipeIngredientRow();
+    }
+
+    document.querySelector("#add-recipe-ingredient").addEventListener("click", addRecipeIngredientRow);
+
+    recipeForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        const recipe = {
+            name: document.querySelector("#recipe-name").value.trim(),
+            instructions: document.querySelector("#recipe-instructions").value.trim(),
+            preparationTimeMinutes: Number(document.querySelector("#preparation-time").value),
+            servings: Number(document.querySelector("#servings").value),
+            ingredients: [...document.querySelectorAll(".recipe-ingredient-row")].map(row => ({
+                ingredientId: Number(row.querySelector(".recipe-ingredient-id").value),
+                quantity: Number(row.querySelector(".recipe-quantity").value),
+                unit: row.querySelector(".recipe-unit").value.trim(),
+                optional: row.querySelector(".recipe-optional").checked
+            }))
+        };
+
+        const response = await fetch("/recipes", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(recipe)
+        });
+
+        const id = await response.json();
+        recipeMessage.textContent = `Recept byl uložen s ID ${id}.`;
+        recipeForm.reset();
+        refreshRecipeIngredientRows();
+    });
+
+    recipeDetailForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        const id = document.querySelector("#recipe-id").value;
+        const response = await fetch(`/recipes/${id}`);
+        const rows = await response.json();
+        recipeIngredientList.replaceChildren();
+
+        if (rows.length === 0) {
+            recipeDetailInfo.textContent = "Recept nebyl nalezen nebo zatím nemá přiřazené suroviny.";
+            return;
+        }
+
+        const recipe = rows[0];
+        recipeDetailInfo.textContent = `${recipe.recipeName} – ${recipe.preparationTimeMinutes} min, ${recipe.servings} porcí. Postup: ${recipe.instructions}`;
+
+        for (const item of rows) {
+            const row = document.createElement("tr");
+            addCell(row, item.ingredientName);
+            addCell(row, item.quantity);
+            addCell(row, item.unit);
+            addCell(row, item.optional ? "Ano" : "Ne");
+            recipeIngredientList.appendChild(row);
+        }
+    });
+
+    loadIngredients()
+        .then(refreshRecipeIngredientRows)
+        .catch(error => {
+            message.textContent = error.message;
+            message.className = "error";
+        });
+</script>
+</body>
+</html>

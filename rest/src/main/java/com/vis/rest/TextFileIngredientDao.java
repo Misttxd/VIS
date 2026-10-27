@@ -47,9 +47,19 @@ public class TextFileIngredientDao implements IngredientDao {
         );
 
         try {
+            String separator = "";
+
+            if (Files.exists(file) && Files.size(file) > 0) {
+                String content = Files.readString(file);
+
+                if (!content.endsWith("\n") && !content.endsWith("\r")) {
+                    separator = System.lineSeparator();
+                }
+            }
+
             Files.writeString(
                     file,
-                    mapper.toLine(storedIngredient) + System.lineSeparator(),
+                    separator + mapper.toLine(storedIngredient) + System.lineSeparator(),
                     StandardOpenOption.CREATE,
                     StandardOpenOption.APPEND
             );
