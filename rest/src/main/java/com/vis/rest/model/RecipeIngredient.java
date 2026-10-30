@@ -1,8 +1,9 @@
-package com.vis.rest;
+package com.vis.rest.model;
 
 import java.math.BigDecimal;
 
-public record RecipeIngredientInput(
+public record RecipeIngredient(
+        Long recipeId,
         Long ingredientId,
         BigDecimal quantity,
         String unit,

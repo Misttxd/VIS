@@ -1,4 +1,4 @@
-package com.vis.rest;
+package com.vis.rest.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

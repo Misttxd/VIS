@@ -1,4 +1,8 @@
-package com.vis.rest;
+package com.vis.rest.controller;
+
+import com.vis.rest.dto.RecipeCreateRequest;
+import com.vis.rest.model.RecipeDetail;
+import com.vis.rest.service.RecipeService;
 
 import org.springframework.web.bind.annotation.*;
 

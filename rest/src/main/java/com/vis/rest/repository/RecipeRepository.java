@@ -1,4 +1,8 @@
-package com.vis.rest;
+package com.vis.rest.repository;
+
+import com.vis.rest.mapper.RecipeDetailMapper;
+import com.vis.rest.model.Recipe;
+import com.vis.rest.model.RecipeDetail;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -24,25 +28,6 @@ public class RecipeRepository {
                 .list();
     }
 
-    public Long create(Recipe recipe) {
-        return jdbcClient.sql("""
-                INSERT INTO recipe
-                    (name, instructions, preparation_time_minutes, servings)
-                VALUES
-                    (:name, :instructions, :preparationTimeMinutes, :servings)
-                RETURNING id
-                """)
-                .param("name", recipe.name())
-                .param("instructions", recipe.instructions())
-                .param("preparationTimeMinutes", recipe.preparationTimeMinutes())
-                .param("servings", recipe.servings())
-                .query(Long.class)
-                .single();
-    }
-
-
-
-
     public List<RecipeDetail> findDetailById(Long recipeId) {
         return jdbcClient.sql("""
             SELECT
@@ -57,9 +42,9 @@ public class RecipeRepository {
                 ri.unit,
                 ri.optional
             FROM recipe r
-            JOIN recipe_ingredient ri
+            LEFT JOIN recipe_ingredient ri
                 ON ri.recipe_id = r.id
-            JOIN ingredient i
+            LEFT JOIN ingredient i
                 ON i.id = ri.ingredient_id
             WHERE r.id = :recipeId
             ORDER BY i.name

@@ -1,4 +1,6 @@
-package com.vis.rest;
+package com.vis.rest.mapper;
+
+import com.vis.rest.model.Ingredient;
 
 import org.springframework.jdbc.core.RowMapper;
 

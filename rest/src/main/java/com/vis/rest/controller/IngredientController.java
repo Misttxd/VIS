@@ -1,4 +1,7 @@
-package com.vis.rest;
+package com.vis.rest.controller;
+
+import com.vis.rest.model.Ingredient;
+import com.vis.rest.service.IngredientService;
 
 import org.springframework.web.bind.annotation.*;
 

@@ -22,4 +22,4 @@ ORDER BY i.name;¨
 
 SELECT *
 FROM recipe_ingredient
-WHERE recipe_id = 1;
+WHERE recipe_id = 2;

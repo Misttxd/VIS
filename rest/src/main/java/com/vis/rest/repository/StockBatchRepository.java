@@ -1,4 +1,6 @@
-package com.vis.rest;
+package com.vis.rest.repository;
+
+import com.vis.rest.model.StockBatch;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;

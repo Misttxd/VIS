@@ -1,17 +1,21 @@
-package com.vis.rest;
+package com.vis.rest.dao;
+
+import com.vis.rest.mapper.CsvIngredientMapper;
+import com.vis.rest.model.Ingredient;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Optional;
 
-public class TextFileIngredientDao implements IngredientDao {
+public class CsvIngredientDao implements IngredientDao {
 
     private final Path file;
     private final CsvIngredientMapper mapper;
 
-    public TextFileIngredientDao(Path file, CsvIngredientMapper mapper) {
+    public CsvIngredientDao(Path file, CsvIngredientMapper mapper) {
         this.file = file;
         this.mapper = mapper;
     }
@@ -30,6 +34,14 @@ public class TextFileIngredientDao implements IngredientDao {
         } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
+    }
+
+    @Override
+    public Optional<Ingredient> findByName(String name) {
+        return getAllItems().stream()
+                .filter(ingredient ->
+                        ingredient.name().equalsIgnoreCase(name.trim()))
+                .findFirst();
     }
 
     @Override

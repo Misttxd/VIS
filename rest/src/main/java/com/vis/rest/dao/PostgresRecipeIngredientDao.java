@@ -1,14 +1,16 @@
-package com.vis.rest;
+package com.vis.rest.dao;
+
+import com.vis.rest.model.RecipeIngredient;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class RecipeIngredientRepository {
+public class PostgresRecipeIngredientDao {
 
     private final JdbcClient jdbcClient;
 
-    public RecipeIngredientRepository(JdbcClient jdbcClient) {
+    public PostgresRecipeIngredientDao(JdbcClient jdbcClient) {
         this.jdbcClient = jdbcClient;
     }
 

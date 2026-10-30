@@ -1,4 +1,7 @@
-package com.vis.rest;
+package com.vis.rest.service;
+
+import com.vis.rest.dao.IngredientDao;
+import com.vis.rest.model.Ingredient;
 
 import org.springframework.stereotype.Service;
 

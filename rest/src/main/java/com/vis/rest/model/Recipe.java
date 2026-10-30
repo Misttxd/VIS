@@ -1,4 +1,4 @@
-package com.vis.rest;
+package com.vis.rest.model;
 
 public record Recipe(
         Long id,

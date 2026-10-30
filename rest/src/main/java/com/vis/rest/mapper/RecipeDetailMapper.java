@@ -1,4 +1,6 @@
-package com.vis.rest;
+package com.vis.rest.mapper;
+
+import com.vis.rest.model.RecipeDetail;
 
 import org.springframework.jdbc.core.RowMapper;
 
@@ -18,7 +20,7 @@ public class RecipeDetailMapper implements RowMapper<RecipeDetail> {
                 resultSet.getString("instructions"),
                 resultSet.getInt("preparation_time_minutes"),
                 resultSet.getInt("servings"),
-                resultSet.getLong("ingredient_id"),
+                resultSet.getObject("ingredient_id", Long.class),
                 resultSet.getString("ingredient_name"),
                 resultSet.getBigDecimal("quantity"),
                 resultSet.getString("unit"),

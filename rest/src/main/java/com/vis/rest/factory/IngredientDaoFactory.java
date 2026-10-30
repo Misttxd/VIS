@@ -1,4 +1,10 @@
-package com.vis.rest;
+package com.vis.rest.factory;
+
+import com.vis.rest.dao.CsvIngredientDao;
+import com.vis.rest.dao.IngredientDao;
+import com.vis.rest.dao.PostgresIngredientDao;
+import com.vis.rest.mapper.CsvIngredientMapper;
+import com.vis.rest.mapper.PostgresIngredientMapper;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,17 +14,17 @@ import org.springframework.context.annotation.Configuration;
 import java.nio.file.Path;
 
 @Configuration
-public class IngredientDAOFactory {
+public class IngredientDaoFactory {
 
     private final IngredientDao postgresDao;
     private final IngredientDao csvDao;
 
-    public IngredientDAOFactory(JdbcClient jdbcClient) {
+    public IngredientDaoFactory(JdbcClient jdbcClient) {
         this.postgresDao = new PostgresIngredientDao(
                 jdbcClient,
                 new PostgresIngredientMapper()
         );
-        this.csvDao = new TextFileIngredientDao(
+        this.csvDao = new CsvIngredientDao(
                 Path.of("ingredients.csv"),
                 new CsvIngredientMapper()
         );

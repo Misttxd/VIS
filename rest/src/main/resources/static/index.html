@@ -213,12 +213,15 @@
     function addRecipeIngredientRow() {
         const row = document.createElement("div");
         row.className = "recipe-ingredient-row";
-        const options = availableIngredients
-            .map(ingredient => `<option value="${ingredient.id}" data-unit="${ingredient.defaultUnit}">${ingredient.name}</option>`)
-            .join("");
 
         row.innerHTML = `
-            <label>Surovina<select class="recipe-ingredient-id" required>${options}</select></label>
+            <label>
+                Surovina
+                <select class="recipe-ingredient-id">
+                    <option value="">+ Nová surovina</option>
+                </select>
+                <input class="recipe-ingredient-name" placeholder="Název nové suroviny">
+            </label>
             <label>Množství<input class="recipe-quantity" type="number" min="0.001" step="0.001" required></label>
             <label>Jednotka<input class="recipe-unit" required></label>
             <label>Volitelná<input class="recipe-optional" type="checkbox"></label>
@@ -226,13 +229,26 @@
         `;
 
         const select = row.querySelector(".recipe-ingredient-id");
+        const nameInput = row.querySelector(".recipe-ingredient-name");
         const unit = row.querySelector(".recipe-unit");
-        const setDefaultUnit = () => {
+
+        for (const ingredient of availableIngredients) {
+            const option = document.createElement("option");
+            option.value = ingredient.id;
+            option.textContent = ingredient.name;
+            option.dataset.unit = ingredient.defaultUnit;
+            select.appendChild(option);
+        }
+
+        const updateSelection = () => {
+            const isNew = select.value === "";
+            nameInput.hidden = !isNew;
+            nameInput.required = isNew;
             unit.value = select.selectedOptions[0]?.dataset.unit ?? "";
         };
-        select.addEventListener("change", setDefaultUnit);
+        select.addEventListener("change", updateSelection);
         row.querySelector(".remove-ingredient").addEventListener("click", () => row.remove());
-        setDefaultUnit();
+        updateSelection();
         recipeIngredients.appendChild(row);
     }
 
@@ -245,53 +261,86 @@
 
     recipeForm.addEventListener("submit", async event => {
         event.preventDefault();
+        recipeMessage.textContent = "";
+        recipeMessage.className = "";
         const recipe = {
             name: document.querySelector("#recipe-name").value.trim(),
             instructions: document.querySelector("#recipe-instructions").value.trim(),
             preparationTimeMinutes: Number(document.querySelector("#preparation-time").value),
             servings: Number(document.querySelector("#servings").value),
             ingredients: [...document.querySelectorAll(".recipe-ingredient-row")].map(row => ({
-                ingredientId: Number(row.querySelector(".recipe-ingredient-id").value),
+                ingredientId: row.querySelector(".recipe-ingredient-id").value
+                    ? Number(row.querySelector(".recipe-ingredient-id").value) : null,
+                name: row.querySelector(".recipe-ingredient-id").value
+                    ? null : row.querySelector(".recipe-ingredient-name").value.trim(),
                 quantity: Number(row.querySelector(".recipe-quantity").value),
                 unit: row.querySelector(".recipe-unit").value.trim(),
                 optional: row.querySelector(".recipe-optional").checked
             }))
         };
 
-        const response = await fetch("/recipes", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(recipe)
-        });
+        try {
+            const response = await fetch("/recipes", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(recipe)
+            });
 
-        const id = await response.json();
-        recipeMessage.textContent = `Recept byl uložen s ID ${id}.`;
-        recipeForm.reset();
-        refreshRecipeIngredientRows();
+            if (!response.ok) {
+                throw new Error("Recept se nepodařilo uložit. Zkontrolujte název, množství a zda se suroviny neopakují.");
+            }
+
+            const id = await response.json();
+            recipeMessage.textContent = `Recept byl uložen s ID ${id}.`;
+            recipeForm.reset();
+            await loadIngredients().catch(error => {
+                message.textContent = error.message;
+                message.className = "error";
+            });
+            refreshRecipeIngredientRows();
+        } catch (error) {
+            recipeMessage.textContent = error.message;
+            recipeMessage.className = "error";
+        }
     });
 
     recipeDetailForm.addEventListener("submit", async event => {
         event.preventDefault();
         const id = document.querySelector("#recipe-id").value;
-        const response = await fetch(`/recipes/${id}`);
-        const rows = await response.json();
         recipeIngredientList.replaceChildren();
+        recipeDetailInfo.className = "";
 
-        if (rows.length === 0) {
-            recipeDetailInfo.textContent = "Recept nebyl nalezen nebo zatím nemá přiřazené suroviny.";
-            return;
-        }
+        try {
+            const response = await fetch(`/recipes/${id}`);
+            if (!response.ok) {
+                throw new Error("Recept se nepodařilo načíst.");
+            }
+            const rows = await response.json();
 
-        const recipe = rows[0];
-        recipeDetailInfo.textContent = `${recipe.recipeName} – ${recipe.preparationTimeMinutes} min, ${recipe.servings} porcí. Postup: ${recipe.instructions}`;
+            if (rows.length === 0) {
+                recipeDetailInfo.textContent = "Recept nebyl nalezen.";
+                return;
+            }
 
-        for (const item of rows) {
-            const row = document.createElement("tr");
-            addCell(row, item.ingredientName);
-            addCell(row, item.quantity);
-            addCell(row, item.unit);
-            addCell(row, item.optional ? "Ano" : "Ne");
-            recipeIngredientList.appendChild(row);
+            const recipe = rows[0];
+            recipeDetailInfo.textContent = `${recipe.recipeName} – ${recipe.preparationTimeMinutes} min, ${recipe.servings} porcí. Postup: ${recipe.instructions}`;
+
+            for (const item of rows) {
+                if (item.ingredientId === null) continue;
+                const row = document.createElement("tr");
+                addCell(row, item.ingredientName);
+                addCell(row, item.quantity);
+                addCell(row, item.unit);
+                addCell(row, item.optional ? "Ano" : "Ne");
+                recipeIngredientList.appendChild(row);
+            }
+
+            if (recipeIngredientList.children.length === 0) {
+                recipeDetailInfo.textContent += " Recept zatím nemá přiřazené suroviny.";
+            }
+        } catch (error) {
+            recipeDetailInfo.textContent = error.message;
+            recipeDetailInfo.className = "error";
         }
     });
 

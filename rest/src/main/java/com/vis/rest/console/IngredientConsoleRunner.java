@@ -1,4 +1,6 @@
-package com.vis.rest;
+package com.vis.rest.console;
+
+import com.vis.rest.service.IngredientService;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;

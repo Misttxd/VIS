@@ -1,6 +1,9 @@
-package com.vis.rest;
+package com.vis.rest.mapper;
+
+import com.vis.rest.model.Ingredient;
 
 public class CsvIngredientMapper {
+
 
     public Ingredient fromLine(String line) {
         String[] values = line.split(";", -1);
