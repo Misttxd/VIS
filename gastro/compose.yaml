@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: gastro
+      POSTGRES_USER: gastro
+      POSTGRES_PASSWORD: gastro
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - gastro_data:/var/lib/postgresql
+volumes:
+  gastro_data:
