@@ -12,23 +12,39 @@ import java.time.LocalDate;
 @Repository
 public class DeliveryDao {
     private final JdbcClient db;
+    private final IdentityMap identityMap;
 
-    public DeliveryDao(JdbcClient db) {
+    public DeliveryDao(JdbcClient db, IdentityMap identityMap) {
         this.db = db;
+        this.identityMap = identityMap;
     }
 
     public List<Delivery> getAllItems() {
-        return db.sql("""
+        // return db.sql("""
+        //         SELECT * FROM stock_delivery ORDER BY expires, id
+        //         """)
+        //         .query(Delivery.class).list();
+        List<Delivery> cached = identityMap.getList(Delivery.class, "all");
+        if (cached != null) {
+            return cached;
+        }
+        List<Delivery> rows = db.sql("""
                 SELECT * FROM stock_delivery ORDER BY expires, id
                 """)
                 .query(Delivery.class).list();
+        return identityMap.rememberList(Delivery.class, "all", rows, Delivery::id);
     }
 
     public List<Delivery> remainingDeliveries() {
-        return db.sql("""
+        List<Delivery> cached = identityMap.getList(Delivery.class, "remaining");
+        if (cached != null) {
+            return cached;
+        }
+        List<Delivery> rows = db.sql("""
                 SELECT * FROM stock_delivery WHERE remaining > 0 ORDER BY expires, id
                 """)
                 .query(Delivery.class).list();
+        return identityMap.rememberList(Delivery.class, "remaining", rows, Delivery::id);
     }
 
     public List<StockLevel> levels(LocalDate day) {
@@ -46,14 +62,26 @@ public class DeliveryDao {
     }
 
     public long receive(Delivery delivery) {
-        return db.sql("""
+        // return db.sql("""
+        //         INSERT INTO stock_delivery(ingredient_id, remaining, expires)
+        //         VALUES (?, ?, ?) RETURNING id
+        //         """)
+        //         .param(delivery.ingredientId())
+        //         .param(delivery.remaining())
+        //         .param(delivery.expires())
+        //         .query(Long.class).single();
+        Delivery saved = db.sql("""
                 INSERT INTO stock_delivery(ingredient_id, remaining, expires)
-                VALUES (?, ?, ?) RETURNING id
+                VALUES (?, ?, ?) RETURNING *
                 """)
                 .param(delivery.ingredientId())
                 .param(delivery.remaining())
                 .param(delivery.expires())
-                .query(Long.class).single();
+                .query(Delivery.class).single();
+        identityMap.put(Delivery.class, saved.id(), saved);
+        identityMap.forgetList(Delivery.class, "all");
+        identityMap.forgetList(Delivery.class, "remaining");
+        return saved.id();
     }
 
     @Transactional
@@ -66,6 +94,9 @@ public class DeliveryDao {
                 .param("id", id)
                 .update();
         if (updated > 0) {
+            identityMap.forgetList(Delivery.class, "all");
+            identityMap.forgetList(Delivery.class, "remaining");
+            identityMap.remove(Delivery.class, id);
             db.sql("DELETE FROM stock_delivery WHERE id = ? AND remaining = 0")
                     .param(id).update();
         }
@@ -73,7 +104,7 @@ public class DeliveryDao {
     }
 
     public List<Delivery> lockUsable(long ingredientId, LocalDate day) {
-        return db.sql("""
+        List<Delivery> rows = db.sql("""
                 SELECT * FROM stock_delivery
                 WHERE ingredient_id = ? AND remaining > 0 AND expires >= ?
                 ORDER BY expires, id
@@ -81,5 +112,6 @@ public class DeliveryDao {
                 """)
                 .param(ingredientId).param(day)
                 .query(Delivery.class).list();
+        return rows.stream().map(row -> identityMap.remember(Delivery.class, row.id(), row)).toList();
     }
 }

@@ -10,26 +10,47 @@ import java.util.List;
 @Repository
 public class RecipeDao {
     private final JdbcClient db;
+    private final IdentityMap identityMap;
 
-    public RecipeDao(JdbcClient db) {
+    public RecipeDao(JdbcClient db, IdentityMap identityMap) {
         this.db = db;
+        this.identityMap = identityMap;
     }
 
     public List<Recipe> getAllItems() {
-        return db.sql("""
+        // return db.sql("""
+        //         SELECT * FROM recipe ORDER BY name
+        //         """)
+        //         .query(Recipe.class).list();
+        List<Recipe> cached = identityMap.getList(Recipe.class, "all");
+        if (cached != null) {
+            return cached;
+        }
+        List<Recipe> rows = db.sql("""
                 SELECT * FROM recipe ORDER BY name
                 """)
                 .query(Recipe.class).list();
+        return identityMap.rememberList(Recipe.class, "all", rows, Recipe::id);
     }
 
     public long create(Recipe recipe) {
-        return db.sql("""
-                INSERT INTO recipe(name, instructions, servings) VALUES (?, ?, ?) RETURNING id
+        // return db.sql("""
+        //         INSERT INTO recipe(name, instructions, servings) VALUES (?, ?, ?) RETURNING id
+        //         """)
+        //         .param(recipe.name().trim())
+        //         .param(recipe.instructions())
+        //         .param(recipe.servings())
+        //         .query(Long.class).single();
+        Recipe saved = db.sql("""
+                INSERT INTO recipe(name, instructions, servings) VALUES (?, ?, ?) RETURNING *
                 """)
                 .param(recipe.name().trim())
                 .param(recipe.instructions())
                 .param(recipe.servings())
-                .query(Long.class).single();
+                .query(Recipe.class).single();
+        identityMap.put(Recipe.class, saved.id(), saved);
+        identityMap.forgetList(Recipe.class, "all");
+        return saved.id();
     }
 
     public List<RecipeDetailRow> findDetail(long id) {

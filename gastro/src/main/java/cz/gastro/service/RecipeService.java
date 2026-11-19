@@ -9,6 +9,7 @@ import cz.gastro.model.RecipeLine;
 import cz.gastro.model.RecipeDetail;
 import cz.gastro.model.RecipeIngredientDetail;
 import cz.gastro.dao.RecipeDao;
+import cz.gastro.dao.IdentityMap;
 import cz.gastro.dao.RecipeIngredientDao;
 import cz.gastro.dto.RecipeRequest;
 import java.util.List;
@@ -23,9 +24,10 @@ public class RecipeService {
 
     private final PostgresIngredientDao ingredientDao;
 
-    public RecipeService(RecipeDao recipeDao,
-                         RecipeIngredientDao recipeIngredientDao,
-                         PostgresIngredientDao ingredientDao) {
+    private final IdentityMap identityMap;
+
+    public RecipeService(RecipeDao recipeDao,RecipeIngredientDao recipeIngredientDao, PostgresIngredientDao ingredientDao, IdentityMap identityMap) {
+        this.identityMap = identityMap;
         this.ingredientDao = ingredientDao;
         this.recipeDao = recipeDao;
         this.recipeIngredientDao = recipeIngredientDao;
@@ -61,6 +63,10 @@ public class RecipeService {
     }
 
     public RecipeDetail detail(long recipeId) {
+        RecipeDetail cached = identityMap.get(RecipeDetail.class, recipeId);
+        if (cached != null) {
+            return cached;
+        }
         var rows = recipeDao.findDetail(recipeId);
         if (rows.isEmpty()) {
             throw new IllegalArgumentException("Recept neexistuje.");
@@ -69,11 +75,11 @@ public class RecipeService {
         List<RecipeIngredientDetail> ingredients = new ArrayList<>();
         for (var row : rows) {
             if (row.ingredientId() != null) {
-                ingredients.add(new RecipeIngredientDetail(row.ingredientId(), row.ingredientName(),
-                        row.categoryName(), row.unit(), row.quantity()));
+                ingredients.add(new RecipeIngredientDetail(row.ingredientId(), row.ingredientName(), row.categoryName(), row.unit(), row.quantity()));
             }
         }
-        return new RecipeDetail(recipe.recipeId(), recipe.recipeName(), recipe.instructions(),
-                recipe.servings(), ingredients);
+        RecipeDetail detail = new RecipeDetail(recipe.recipeId(), recipe.recipeName(), recipe.instructions(), recipe.servings(), ingredients);
+        identityMap.put(RecipeDetail.class, recipeId, detail);
+        return detail;
     }
 }
