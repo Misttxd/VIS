@@ -206,7 +206,7 @@ nestačí, databáze vrátí i~předchozí odpisy tohoto plánu.
 \begin{center}\includegraphics[width=\linewidth]{wireframy/planovani.png}\end{center}
 \chapter{Návrh doménového modelu}
 \section{Statický diagram tříd}
-Model tvoří datové třídy z~balíčku \texttt{cz.gastro.model}, zapsané
+Model tvoří datové třídy z~balíčku \texttt{cz.rest.model}, zapsané
 v~Javě jako \texttt{record}. Čáry znázorňují vazby uložené pomocí
 identifikátorů. Například \texttt{Delivery.ingredientId} určuje, ke které
 surovině skladová položka patří.
@@ -366,6 +366,6 @@ posílá požadavky na stejný server, ze kterého načetl stránku.
 
 Konfigurace v~\texttt{compose.yaml} mapuje port~5434 na lokálním počítači
 na port~5432 kontejneru PostgreSQL. Databázové soubory uchovává svazek
-\texttt{gastro\_data}. Připojení k~databázi i~cestu k~souboru CSV určuje
+\texttt{rest\_data}. Připojení k~databázi i~cestu k~souboru CSV určuje
 \texttt{application.properties}. CSV čte a~zapisuje přímo proces aplikace.
 \end{document}

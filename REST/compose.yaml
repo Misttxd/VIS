@@ -1,15 +1,15 @@
-name: gastro
+name: rest
 
 services:
   db:
     image: postgres:18
     environment:
-      POSTGRES_DB: gastro
-      POSTGRES_USER: gastro
-      POSTGRES_PASSWORD: gastro
+      POSTGRES_DB: rest
+      POSTGRES_USER: rest
+      POSTGRES_PASSWORD: rest
     ports:
       - "127.0.0.1:5434:5432"
     volumes:
-      - gastro_data:/var/lib/postgresql
+      - rest_data:/var/lib/postgresql
 volumes:
-  gastro_data:
+  rest_data:

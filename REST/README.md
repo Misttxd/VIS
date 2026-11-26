@@ -18,7 +18,7 @@ npm install
 npm run dev
 ```
 
-Otevři http://localhost:5173. Přihlášení je `admin/admin` nebo `user/user`. Java API běží na portu 8081. Ve Windows použij `mvnw.cmd spring-boot:run`. Databáze běží na portu 5434 a má vlastní Docker volume. Nastavení připojení je v `src/main/resources/application.properties`. Compose název `gastro` zachovává původní databázi i po přejmenování složky. Aplikace v terminálech ukončíš pomocí Ctrl+C a databázi příkazem `docker compose stop` ze složky `REST`.
+Otevři http://localhost:5173. Přihlášení je `admin/admin` nebo `user/user`. Java API běží na portu 8081. Ve Windows použij `mvnw.cmd spring-boot:run`. Databáze běží na portu 5434 a má vlastní Docker volume. Nastavení připojení je v `src/main/resources/application.properties`. Databáze se jmenuje `rest` a používá účet `rest/rest`. Aplikace v terminálech ukončíš pomocí Ctrl+C a databázi příkazem `docker compose stop` ze složky `REST`.
 
 ## Vyzkoušení od začátku
 
@@ -35,7 +35,7 @@ Při spuštění se také do existující tabulky `meal_plan` doplní sloupec `p
 
 ## Jak číst kód
 
-Začni v `src/main/java/cz/gastro`. Při uložení receptu sleduj jednu akci od začátku do konce:
+Začni v `src/main/java/cz/rest`. Při uložení receptu sleduj jednu akci od začátku do konce:
 
 1. `UI/src/pages/Recipes.tsx` odešle jeden požadavek s celým receptem přes `UI/src/api.ts`.
 2. `controller/RecipeController.java` přijme data formuláře jako `dto/RecipeRequest.java` a předá je službě.
