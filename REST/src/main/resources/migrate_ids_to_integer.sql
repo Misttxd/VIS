@@ -1,0 +1,30 @@
+-- Jednorázový převod starší databáze s BIGINT identifikátory.
+BEGIN;
+
+ALTER TABLE app_user ALTER COLUMN id TYPE INTEGER;
+ALTER TABLE category ALTER COLUMN id TYPE INTEGER;
+ALTER TABLE ingredient
+    ALTER COLUMN id TYPE INTEGER,
+    ALTER COLUMN category_id TYPE INTEGER;
+ALTER TABLE stock_delivery
+    ALTER COLUMN id TYPE INTEGER,
+    ALTER COLUMN ingredient_id TYPE INTEGER;
+ALTER TABLE recipe ALTER COLUMN id TYPE INTEGER;
+ALTER TABLE recipe_ingredient
+    ALTER COLUMN recipe_id TYPE INTEGER,
+    ALTER COLUMN ingredient_id TYPE INTEGER;
+ALTER TABLE meal_plan
+    ALTER COLUMN id TYPE INTEGER,
+    ALTER COLUMN user_id TYPE INTEGER;
+ALTER TABLE meal_plan_item
+    ALTER COLUMN plan_id TYPE INTEGER,
+    ALTER COLUMN recipe_id TYPE INTEGER;
+
+ALTER SEQUENCE app_user_id_seq AS INTEGER;
+ALTER SEQUENCE category_id_seq AS INTEGER;
+ALTER SEQUENCE ingredient_id_seq AS INTEGER;
+ALTER SEQUENCE stock_delivery_id_seq AS INTEGER;
+ALTER SEQUENCE recipe_id_seq AS INTEGER;
+ALTER SEQUENCE meal_plan_id_seq AS INTEGER;
+
+COMMIT;

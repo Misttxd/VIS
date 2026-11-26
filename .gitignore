@@ -1,0 +1,35 @@
+# Podklady a původní projekt
+/OG/
+/Přednášky/
+/Projekt zad*.png
+
+# Editor a operační systém
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+
+# Java a frontend
+target/
+out/
+node_modules/
+dist/
+.vite/
+*.class
+*.tsbuildinfo
+
+# Lokální data a nastavení
+/REST/data/
+.env
+.env.*
+!.env.example
+*.log
+
+# Dočasné soubory LaTeXu
+*.aux
+*.toc
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
